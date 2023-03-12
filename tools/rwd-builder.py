@@ -10,15 +10,15 @@ def param_to_data_string(param):
     # pad to even number of characters (required by binascii)
     if len(param) % 2 == 1:
         param = '0' + param
-
-    return binascii.a2b_hex(param)
+    x = str(binascii.a2b_hex(param))
+    return x
 
 def generate_file_header(indicator, headers):
     header_bytes = indicator
     for header in headers:
-        header_bytes += chr(len(header))
+        header_bytes += struct.pack('!B', len(header))
         for item in header:
-            header_bytes += chr(len(item)) + item
+            header_bytes += struct.pack('!B', len(item)) + bytes(item)
     return header_bytes
 
 def main():
@@ -35,8 +35,8 @@ def main():
 
     # convert from string to hex
     can_addr = param_to_data_string(args.can_address)
-    fw_versions = map(lambda x: x.ljust(16, '\x00'), args.supported_versions)
-    sa_keys = map(param_to_data_string, args.security_keys)
+    fw_versions = list(map(lambda x: x.ljust(16, '\x00'), args.supported_versions))
+    sa_keys = list(map(param_to_data_string, args.security_keys))
     fw_key = param_to_data_string(args.encryption_key)
     start_addr = param_to_data_string(args.start_address)
     data_size = param_to_data_string(args.data_size)
@@ -45,7 +45,7 @@ def main():
     f_base = os.path.splitext(os.path.basename(args.encrypted_file))[0]
     rwd_file = os.path.join(f_dir, f_base + '.rwd')
 
-    indicator = '\x5A\x0D\x0A' # CAN format
+    indicator = b'\x5A\x0D\x0A' # CAN format
     headers = [
         ['\x00'], # always zero
         [], # always empty
@@ -62,8 +62,9 @@ def main():
     with open(args.encrypted_file, 'rb') as f:
         rwd_fw_bytes = f.read()
 
-    rwd_start_len = start_addr.rjust(4, '\x00') + data_size.rjust(4, '\x00')
-    file_checksum = sum(map(ord, rwd_header_bytes+rwd_start_len+rwd_fw_bytes)) & 0xFFFFFFFF
+    rwd_start_len = bytes(start_addr.rjust(4, '\x00') + data_size.rjust(4, '\x00'))
+    file_checksum = sum(ord(a) for a in (rwd_header_bytes + rwd_start_len + rwd_fw_bytes)) & 0xFFFFFFFF
+    #file_checksum = sum(rwd_header_bytes + rwd_start_len + rwd_fw_bytes) & 0xFFFFFFFF
     print('file checksum: {}'.format(hex(file_checksum)))
     rwd_checksum_bytes = struct.pack('<L', file_checksum)
 

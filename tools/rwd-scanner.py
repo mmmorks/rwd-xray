@@ -15,7 +15,7 @@ def main():
             continue
         with gzip.open(path, 'rb') as f:
             indicator = f.read(3)
-            assert indicator[1:3] == "\x0d\x0a"
+#            assert indicator[1:3] == "\x0d\x0a"
             if indicator not in formats:
                 formats[indicator] = { 'count': 0 }
             formats[indicator]['count'] += 1

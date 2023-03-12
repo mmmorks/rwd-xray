@@ -64,10 +64,10 @@ class Base(object):
         print(search_value)
         print(search_value_padded)
 
-        search_exact = re.compile('.*'+search_value+'.*', flags=re.IGNORECASE|re.MULTILINE|re.DOTALL)
+        search_exact = re.compile('.*'+search_value+'.*', flags=re.MULTILINE|re.DOTALL)
         # sometimes there is an extra character after each character
         # 37805-RBB-J530 -> 3377880550--RRBCBA--JA503000
-        search_padded = re.compile('.*'+search_value_padded+'.*', flags=re.IGNORECASE|re.MULTILINE|re.DOTALL)
+        search_padded = re.compile('.*'+search_value_padded+'.*', flags=re.MULTILINE|re.DOTALL)
         operators = [
             { 'fn': operator.__xor__, 'sym': '^' },
             { 'fn': operator.__and__, 'sym': '&' },

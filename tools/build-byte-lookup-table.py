@@ -10,7 +10,7 @@ import struct
 
 from bin_to_rwd import default_decrypt_lookup_table as crv_enc_lookup_table
 
-RWD_PATCH_START_ADDR = 0x4000
+RWD_PATCH_START_ADDR = 0x0
 
 def main():
   # Example: python3 build-byte-lookup-table.py --input_bin civic-stock.bin --input_enc 39990-TBA-A030-M1.enc
@@ -41,6 +41,7 @@ def main():
     if rwd_enc[i] in decrypt_lookup_table:
       if decrypt_lookup_table[rwd_enc[i]] != full_fw[RWD_PATCH_START_ADDR + i]:
         print('Build table failed. The code in rwd is not the same as in firmware binary.')
+        print('decrypt_lookup_table =', decrypt_lookup_table)
         sys.exit(-2)
     else:
       decrypt_lookup_table[rwd_enc[i]] = full_fw[RWD_PATCH_START_ADDR + i]

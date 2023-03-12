@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Convert full firmware binary to rwd patch.
 # Supported models:
@@ -14,13 +14,12 @@ import subprocess
 import struct
 
 # Decryption lookup table built from Civic 2016 sedan bin/rwd, also apply to CR-V 5g.
-default_decrypt_lookup_table = {144: 72, 218: 55, 255: 255, 164: 1, 195: 26, 99: 2, 28: 178, 205: 158, 125: 138, 45: 118, 222: 98, 142: 78, 62: 58, 243: 38, 163: 18, 83: 254, 3: 234, 172: 214, 92: 194, 12: 174, 189: 154, 109: 134, 29: 114, 206: 94, 126: 74, 46: 54, 227: 34, 147: 14, 113: 0, 67: 250, 236: 230, 156: 210, 76: 190, 252: 170, 173: 150, 93: 130, 13: 110, 148: 253, 120: 159, 199: 148, 198: 137, 77: 126, 23: 104, 73: 83, 203: 73, 78: 62, 123: 53, 254: 42, 43: 33, 90: 23, 161: 12, 10: 3, 132: 249, 191: 239, 226: 220, 197: 201, 248: 191, 117: 181, 34: 172, 37: 161, 88: 151, 141: 142, 8: 131, 134: 121, 185: 111, 54: 101, 190: 90, 57: 79, 128: 68, 139: 57, 14: 46, 138: 35, 131: 10, 100: 241, 1: 228, 146: 200, 133: 185, 168: 171, 104: 155, 40: 139, 251: 85, 94: 66, 91: 45, 103: 124, 55: 112, 231: 156, 80: 56, 224: 92, 102: 113, 96: 60, 98: 188, 97: 252, 140: 206, 122: 31, 232: 187, 16: 40, 202: 51, 26: 7, 239: 251, 5: 153, 219: 77, 119: 128, 21: 157, 238: 102, 180: 5, 217: 119, 30: 50, 7: 100, 32: 44, 183: 144, 50: 176, 110: 70, 157: 146, 2: 164, 44: 182, 145: 8, 58: 15, 27: 29, 64: 52, 9: 67, 31: 199, 179: 22, 42: 11, 193: 20, 211: 30, 129: 4, 241: 32, 74: 19, 178: 208, 247: 160, 112: 64, 242: 224, 114: 192, 165: 193, 0: 36, 59: 37, 196: 9, 154: 39, 75: 41, 72: 147, 249: 127, 162: 204, 130: 196, 229: 209, 182: 133, 48: 48, 86: 109, 240: 96, 137: 99, 151: 136, 209: 24, 108: 198, 181: 197, 212: 13, 244: 21, 11: 25, 118: 117, 228: 17, 214: 141, 52: 229, 160: 76, 115: 6, 106: 27, 56: 143, 25: 71, 36: 225, 194: 212, 208: 88, 187: 69, 171: 65, 153: 103, 38: 97, 207: 243, 82: 184, 184: 175, 188: 218, 213: 205, 121: 95, 15: 195, 81: 248, 24: 135, 70: 105, 150: 125, 174: 86, 158: 82, 220: 226, 201: 115, 71: 116, 51: 246, 177: 16, 176: 80, 22: 93, 39: 108, 159: 231, 223: 247, 186: 47, 169: 107, 245: 213, 235: 81, 192: 84, 124: 202, 175: 235, 84: 237, 79: 211, 234: 59, 143: 227, 237: 166, 33: 236, 253: 106, 65: 244, 111: 219, 200: 179, 101: 177, 17: 232, 20: 221, 166: 129, 60: 186, 61: 122, 167: 140, 204: 222, 87: 120, 41: 75, 135: 132, 136: 163, 49: 240, 250: 63, 107: 49, 170: 43, 18: 168, 221: 162, 35: 242, 225: 28, 149: 189, 85: 173, 152: 167, 95: 215, 53: 165, 89: 87, 66: 180, 6: 89, 47: 203, 210: 216, 215: 152, 233: 123, 116: 245, 127: 223, 19: 238, 69: 169, 105: 91, 4: 217, 216: 183, 68: 233, 63: 207, 155: 61, 246: 149, 230: 145}
-
+default_decrypt_lookup_table = {5: 1, 0: 0, 128: 128, 127: 127, 255: 255, 248: 248, 251: 251, 4: 4, 129: 125, 10: 6, 15: 15, 75: 75, 74: 70, 29: 25, 14: 10, 94: 90, 3: 3, 6: 2, 9: 5, 7: 7, 8: 8, 13: 9, 11: 11, 12: 12, 17: 13, 18: 14, 16: 16, 21: 17, 22: 18, 19: 19, 20: 20, 25: 21, 34: 30, 26: 22, 23: 23, 24: 24, 30: 26, 27: 27, 28: 28, 33: 29, 100: 100, 143: 143, 159: 159, 171: 171, 81: 77, 37: 33, 38: 34, 35: 35, 48: 48, 222: 218, 149: 145, 228: 228, 90: 86, 88: 88, 124: 124, 163: 163, 152: 152, 164: 164, 32: 32, 169: 165, 170: 166, 176: 176, 208: 208, 238: 234, 36: 36, 64: 64, 98: 94, 240: 240, 239: 239, 219: 219, 111: 111, 172: 172, 84: 84, 196: 196, 132: 132, 192: 192, 77: 73, 191: 191, 146: 142, 118: 114, 51: 51, 89: 85, 178: 174, 1: 253, 92: 92, 137: 133, 250: 246, 121: 117, 158: 154, 67: 67, 216: 216, 203: 203, 79: 79, 247: 247, 177: 173, 249: 245, 195: 195, 244: 244, 243: 243, 135: 135, 246: 242, 185: 181, 245: 241, 221: 217, 242: 238, 236: 236, 230: 226, 235: 235, 150: 146, 237: 233, 232: 232, 231: 231, 184: 184, 233: 229, 227: 227, 99: 99, 229: 225, 218: 214, 223: 223, 62: 58, 226: 222, 144: 144, 220: 220, 215: 215, 217: 213, 211: 211, 102: 98, 213: 209, 83: 83, 207: 207, 57: 53, 209: 205, 200: 200, 141: 137, 202: 198, 197: 193, 109: 105, 188: 188, 190: 186, 183: 183, 182: 178, 175: 175, 71: 71, 140: 140, 174: 170, 206: 202, 167: 167, 166: 162, 145: 141, 156: 156, 180: 180, 157: 153, 154: 150, 147: 147, 66: 62, 101: 97, 139: 139, 136: 136, 134: 130, 53: 49, 106: 102, 126: 122, 119: 119, 116: 116, 43: 43, 108: 108, 110: 106, 103: 103, 105: 101, 96: 96, 97: 93, 50: 46, 91: 91, 214: 210, 56: 56, 252: 252, 85: 81, 204: 204, 73: 69, 69: 65, 63: 63, 60: 60, 61: 57, 55: 55, 78: 74, 52: 52, 54: 50, 93: 89, 47: 47, 65: 61, 49: 45, 46: 42, 45: 41, 40: 40, 39: 39, 254: 250, 41: 37, 31: 31, 70: 66, 162: 158, 205: 201, 153: 149, 87: 87, 42: 38, 44: 44, 58: 54, 59: 59, 68: 68, 72: 72, 76: 76, 82: 78, 80: 80, 86: 82, 95: 95, 104: 104, 107: 107, 113: 109, 114: 110, 112: 112, 117: 113, 115: 115, 122: 118, 120: 120, 125: 121, 123: 123, 130: 126, 133: 129, 131: 131, 138: 134, 142: 138, 148: 148, 151: 151, 155: 155, 161: 157, 160: 160, 165: 161, 168: 168, 173: 169, 181: 177, 179: 179, 186: 182, 189: 185, 187: 187, 193: 189, 194: 190, 198: 194, 201: 197, 199: 199, 210: 206, 212: 212, 225: 221, 224: 224, 234: 230, 241: 237, 253: 249, 2: 254}
 
 # sum of x, x is unsigned shorts
 def checksum_by_sum(fw, start, end):
   s = 0
-  for i in range(start, end - start, 2):
+  for i in range(start, end, 2):
     s += struct.unpack('!H', fw[i:i + 2])[0]
   return s
 
@@ -28,12 +27,19 @@ def checksum_by_sum(fw, start, end):
 # sum of -x, x is unsigned shorts
 def checksum_by_negative_sum(fw, start, end):
   s = 0
-  for i in range(start, end - start, 2):
+  for i in range(start, end, 2):
     s += -struct.unpack('!H', fw[i:i + 2])[0]
   return s
 
+# sum of -x, x is little endian unsigned ints 
+def checksum_by_negative_sum_little_endian_ints(fw, start, end):
+  s = 0
+  for i in range(start, end, 4):
+    s -= struct.unpack('<I', fw[i:i + 4])[0]
+  return s
 
-checksum_funcs = [checksum_by_sum, checksum_by_negative_sum]
+
+checksum_funcs = [checksum_by_sum, checksum_by_negative_sum, checksum_by_negative_sum_little_endian_ints]
 
 car_models = {
   '39990-TLA-A030': { #CR-V thanks to joe1
@@ -91,6 +97,26 @@ car_models = {
       #(checksum func idx, offset)
      'checksum-offsets': [(0, 0x4bf80), (1, 0x4bffe)]
   },
+   '39990-TG7-A030': { #pilot mmmorks
+     'can-address': '0x18DA30F1',
+     'supported-versions': ['39990-TG7-A020', '39990-TG7-A030'], #'39990-TG7,A020', '39990-TG7,A030'],
+     'security-key': ['0x001100121020', '0x001100121020'],
+     'encryption-key': '0x010203',
+     'start-address': 0x10000,
+     'data-size': 0x50000,
+      #(checksum func idx, offset)
+     'checksum-offsets': [(2, 0x9ffc, '<I'), (2, 0x1cffc, '<I'), (2, 0x4fefc, '<I')]
+  },
+   '39990-TG7-A060': { #pilot mmmorks
+     'can-address': '0x18DA30F1',
+     'supported-versions': ['39990-TG7-A060'], #, '39990-TG7,A060'],
+     'security-key': ['0x001100121020'], #, '0x001100121020'],
+     'encryption-key': '0x010203',
+     'start-address': 0x10000,
+     'data-size': 0x50000,
+      #(checksum func idx, offset)
+     'checksum-offsets': [(2, 0x9ffc, '<I'), (2, 0x1cffc, '<I'), (2, 0x4fefc, '<I')]
+  },
 }
 
 
@@ -117,34 +143,48 @@ def main():
 
   with open(args.input_bin, 'rb') as f:
     full_fw = f.read()
-    patch_fw = full_fw[m['start-address']:(m['start-address'] + m['data-size'])]
-    for func_idx, off in m['checksum-offsets']:
-      old_checksum = struct.unpack('!H', patch_fw[off:off+2])[0] & 0xFFFF
-      new_checksum = checksum_funcs[func_idx](patch_fw, 0, off) & 0xFFFF
-      print('Update checksum at offset %s from %s to %s' % (hex(off),  hex(old_checksum), hex(new_checksum)))
-      patch_fw = patch_fw[:off] + struct.pack('!H', new_checksum & 0xFFFF) + patch_fw[off+2:]
+  
+  #patch_fw = full_fw[m['start-address']:(m['start-address'] + m['data-size'])]
+  patch_fw = full_fw
+  start = 0
+  for func_idx, off, format_str in m['checksum-offsets']:
+    s = format_str[1].lower()
+    if s == 'h':
+        size = 2
+    elif s == 'i':
+        size = 4
+    else:
+        raise Exception("Unexpected format_str")
 
-    encrypted = bytearray()
-    for b in patch_fw:
-      encrypted.append(encrypt_lookup_table[b])
-    out_enc_path = args.input_bin + '.enc'
-    with open(out_enc_path, 'wb') as out_f:
-      out_f.write(encrypted)
-      print('Encryption done, saved to %s.' % out_enc_path)
-    cur_dir = os.path.dirname(os.path.abspath(__file__))
-    cmds = [
-      'python2',
-      'rwd-builder.py',
-      '--can-address', m['can-address'],
-      '--supported-versions', *m['supported-versions'],
-      '--security-key', *m['security-key'],
-      '--encryption-key', m['encryption-key'],
-      '--encrypted-file', out_enc_path,
-      '--start-address', hex(m['start-address']),
-      '--data-size',  hex(m['data-size'])
-    ]
-    subprocess.check_call(cmds, cwd=cur_dir)
-    print('RWD file %s created.' % (out_enc_path[:-4] + '.rwd'))
+    mask = 2 ** (size*8) - 1
+    print("0x{:08X} {} {}".format(off, patch_fw[off:off+size], len(patch_fw)))
+    old_checksum = struct.unpack(format_str, patch_fw[off:off+size])[0] & mask
+    new_checksum = checksum_funcs[func_idx](patch_fw, start, off) & mask
+    start = off+size
+    print('Update checksum at offset %s from %s to %s' % (hex(off),  hex(old_checksum), hex(new_checksum)))
+    patch_fw = patch_fw[:off] + struct.pack(format_str, new_checksum & mask) + patch_fw[start:]
+
+  encrypted = bytearray()
+  for b in patch_fw:
+    encrypted.append(encrypt_lookup_table[b])
+  out_enc_path = args.input_bin + '.enc'
+  with open(out_enc_path, 'wb') as out_f:
+    out_f.write(encrypted)
+    print('Encryption done, saved to %s.' % out_enc_path)
+  cur_dir = os.path.dirname(os.path.abspath(__file__))
+  cmds = [
+    'python2',
+    'rwd-builder.py',
+    '--can-address', m['can-address'],
+    '--supported-versions', *m['supported-versions'],
+    '--security-key', *m['security-key'],
+    '--encryption-key', m['encryption-key'],
+    '--encrypted-file', out_enc_path,
+    '--start-address', hex(m['start-address']),
+    '--data-size',  hex(m['data-size'])
+  ]
+  subprocess.check_call(cmds, cwd=cur_dir)
+  print('RWD file %s created.' % (out_enc_path[:-4] + '.rwd'))
 
 if __name__== "__main__":
     main()
