@@ -115,16 +115,43 @@ car_models = {
      'start-address': 0x10000,
      'data-size': 0x50000,
       #(checksum func idx, offset)
-     'checksum-offsets': [(2, 0x9ffc, '<I'), (2, 0x1cffc, '<I'), (2, 0x4fefc, '<I')]
+     'checksum-offsets': [(2, 0x9ffc, '<I'), (2, 0x1cffc, '<I'), (2, 0x4fefc, '<I')],
+     'patches': [
+       (0x0f22b, b'\x14', b'\x01'), # min_speed_1
+       (0x100ad, b'\x14', b'\x01'), # min_speed_1
+       (0x10f2f, b'\x14', b'\x01'), # min_speed_1
+       (0x11db1, b'\x14', b'\x01'), # min_speed_1
+       (0x12c33, b'\x14', b'\x01'), # min_speed_1
+       (0x1bdb8, b'\x0a', b'\x01'), # min_speed_2
+       (0x1c030, b'\x0a', b'\x01'), # min_speed_2
+       (0x1c2a8, b'\x0a', b'\x01'), # min_speed_2
+       (0x1c520, b'\x0a', b'\x01'), # min_speed_2
+       (0x1c798, b'\x0a', b'\x01'), # min_speed_2
+     ]
   },
 }
 
+def apply_patches(fw, apply_patches, car):
+  patch_fw = bytearray(fw)
+  if apply_patches:
+    if not 'patches' in car:
+      raise Exception('apply_patches = true, but there are no patches for this model')
+
+    for offset, old, new in car['patches']:
+      print('Patching {:08x} from {} to {}'.format(offset, old, new))
+      assert len(old) == len(new)
+      length = len(old)
+      assert patch_fw[offset:offset+length] == old, 'Expected {}, but got {}'.format(old, patch_fw[offset:offset+length])
+      patch_fw[offset:offset+length] = new
+
+  return patch_fw
 
 def main():
   # example: python3 bin_to_rwd.py --input_bin crv_5g_user_patched.bin --model 39990-TLA-A030
   parser = argparse.ArgumentParser()
   parser.add_argument("--input_bin", required=True, help="Full firmware binary file")
   parser.add_argument("--model", default='39990-TLA-A030', help="EPS part number")
+  parser.add_argument("--patch", action='store_true', help="Apply patches before RWD generation")
   args = parser.parse_args()
 
   if not args.model in car_models:
@@ -145,7 +172,7 @@ def main():
     full_fw = f.read()
   
   #patch_fw = full_fw[m['start-address']:(m['start-address'] + m['data-size'])]
-  patch_fw = full_fw
+  patch_fw = apply_patches(full_fw, args.patch, m)
   start = 0
   for func_idx, off, format_str in m['checksum-offsets']:
     s = format_str[1].lower()
@@ -157,12 +184,14 @@ def main():
         raise Exception("Unexpected format_str")
 
     mask = 2 ** (size*8) - 1
-    print("0x{:08X} {} {}".format(off, patch_fw[off:off+size], len(patch_fw)))
     old_checksum = struct.unpack(format_str, patch_fw[off:off+size])[0] & mask
     new_checksum = checksum_funcs[func_idx](patch_fw, start, off) & mask
     start = off+size
-    print('Update checksum at offset %s from %s to %s' % (hex(off),  hex(old_checksum), hex(new_checksum)))
-    patch_fw = patch_fw[:off] + struct.pack(format_str, new_checksum & mask) + patch_fw[start:]
+    if old_checksum != new_checksum:
+      print('Update checksum at offset %s from %s to %s' % (hex(off),  hex(old_checksum), hex(new_checksum)))
+      patch_fw = patch_fw[:off] + struct.pack(format_str, new_checksum & mask) + patch_fw[start:]
+    else:
+      print('Checksum at %s unchanged' % (hex(off)))
 
   encrypted = bytearray()
   for b in patch_fw:
