@@ -61,24 +61,25 @@ _E4_LUT_OLD = bytes.fromhex(
     '0014001400140014001400140014001400140014001400140014001400140014'
     '0014001400140014001400140014001400140014001400140014001400140014'
     '0014001400140014001400140014001400140014001400140014001400140014')
-# E4 torque LUT: doubled values (max 10240)
+# E4 torque LUT: extended-slope + quadratic rolloff (max 10246, ~2× authority)
+# Stock [0-65], transition 37→42/idx [66-100], linear 42/idx [100-221], rolloff [221-255]
 _E4_LUT_NEW = bytes.fromhex(
-    '00007400e6005a01ce014202b40228039c0310048204f6046a05de055006c406'
-    '3807ac071e08920806097a09ec09600ad40a480bba0b2e0ca20c160d880dfc0d'
-    '700eba0e040f4e0f980fe20f2c107610c010081152119c11e61130127a12c412'
-    '0e135813a213ec1336148014ca1414155e15a615f0153a168416ce1618176217'
-    'ac17f6171e1844186c189418ba18e2180a19301958198019a819ce19f6191e1a'
-    '441a6c1a941aba1ae21a0a1b301b581b801ba61bce1bf61b1e1c441c6c1c941c'
-    'ba1ce21c0a1d301d581d801da61dce1df61d1c1e441e6c1e941eba1ee21e0a1f'
-    '301f581f801fa61fce1ff61f1c2044206c209220ba20e2200a21302158218021'
-    'a621ce21f6211c2244226c229222ba22e2220823302358238023a623ce23f623'
-    '1c2444246c249224ba24e2240825302558257e25a625ce25f6251c2644266c26'
-    '9226ba26ca26da26ea26fa260a271c272c273c274c275c276c277c278c279c27'
-    'ac27be27ce27de27ee27fe27fe27fe2700280028002800280028002800280028'
-    '0028002800280028002800280028002800280028002800280028002800280028'
-    '0028002800280028002800280028002800280028002800280028002800280028'
-    '0028002800280028002800280028002800280028002800280028002800280028'
-    '0028002800280028002800280028002800280028002800280028002800280028')
+    '00003a007300ad00e70021015a019401ce01080241027b02b502ef0228036203'
+    '9c03d6030f0449048304bd04f60430056a05a405dd05170651068b06c406fe06'
+    '38075d078207a707cc07f10716083b0860088408a908ce08f30818093d096209'
+    '8709ac09d109f6091b0a400a650a8a0aaf0ad30af80a1d0b420b670b8c0bb10b'
+    'd60bfb0b200c450c6b0c900cb60cdc0c020d280d4e0d740d9b0dc10de80d0f0e'
+    '360e5d0e850eac0ed40efc0e240f4c0f740f9c0fc50fed0f16103f1068109110'
+    'bb10e4100e11381162118c11b611e0110a1234125e128812b212dc1206133013'
+    '5a138413ae13d81302142c1456148014aa14d414fe14281552157c15a615d015'
+    'fa1524164e167816a216cc16f61620174a1774179e17c817f2171c1846187018'
+    '9a18c418ee18181942196c199619c019ea19141a3e1a681a921abc1ae61a101b'
+    '3a1b641b8e1bb81be21b0c1c361c601c8a1cb41cde1c081d321d5c1d861db01d'
+    'da1d041e2e1e581e821eac1ed61e001f2a1f541f7e1fa81fd21ffc1f26205020'
+    '7a20a420ce20f82022214c217621a021ca21f4211e22482272229c22c622f022'
+    '1a2344236e239823c223ec23162440246a249424be24e82412253c2565258d25'
+    'b425da25fe252126432664268326a226bf26db26f5260e2727273d2753276727'
+    '7b278c279d27ad27bb27c827d327de27e727ef27f627fc270028032805280628')
 
 car_models = {
   '39990-TLA-A030': { #CR-V thanks to joe1
@@ -166,35 +167,35 @@ car_models = {
        (0x1c2a8, b'\x0a', b'\x01'), # min_speed_2
        (0x1c520, b'\x0a', b'\x01'), # min_speed_2
        (0x1c798, b'\x0a', b'\x01'), # min_speed_2
-       # E4 torque path: LUT×2 approach (~2x authority, consistent ratio)
-       # All 5 lane_assist_params variants: torque_lut×2, correction_gain, clamps
+       # E4 torque path: extended-slope + quadratic rolloff (~2x authority)
+       # All 5 lane_assist_params variants: torque_lut, correction_gain, clamps
        # Offsets are into .bin data (Ghidra address - 0x10000)
        # Variant 4 (idx=5): TG8A2, TG8X0 — Ghidra base 0x1E5AA
-       (0x0E9D0, _E4_LUT_OLD, _E4_LUT_NEW),              # torque_lut[256] ×2
+       (0x0E9D0, _E4_LUT_OLD, _E4_LUT_NEW),              # torque_lut[256] extended-slope
        (0x0F1DE, b'\x00\xa0', b'\x00\xbe'),               # correction_gain_max 0xA000→0xBE00
        (0x0F222, b'\x80', b'\xbe'),                       # component_x_max_limit 128→190
        (0x0F223, b'\xa0', b'\xbe'),                       # component_b_max_limit 160→190
        (0x0F224, b'\x99\x01', b'\xe6\x01'),               # component_d_max_limit 409→486
        # Variant 3 (idx=4): TG8C0, TG8A0, TG8A1, TG8C1 — Ghidra base 0x1F42C
-       (0x0F852, _E4_LUT_OLD, _E4_LUT_NEW),              # torque_lut[256] ×2
+       (0x0F852, _E4_LUT_OLD, _E4_LUT_NEW),              # torque_lut[256] extended-slope
        (0x10060, b'\x00\xa0', b'\x00\xbe'),               # correction_gain_max 0xA000→0xBE00
        (0x100A4, b'\x80', b'\xbe'),                       # component_x_max_limit 128→190
        (0x100A5, b'\xa0', b'\xbe'),                       # component_b_max_limit 160→190
        (0x100A6, b'\x99\x01', b'\xe6\x01'),               # component_d_max_limit 409→486
        # Variant 2 (idx=3): TG7D0, TG7Y0, TG7C2, TG7A2 — Ghidra base 0x202AE
-       (0x106D4, _E4_LUT_OLD, _E4_LUT_NEW),              # torque_lut[256] ×2
+       (0x106D4, _E4_LUT_OLD, _E4_LUT_NEW),              # torque_lut[256] extended-slope
        (0x10EE2, b'\x00\xa0', b'\x00\xbe'),               # correction_gain_max 0xA000→0xBE00
        (0x10F26, b'\x80', b'\xbe'),                       # component_x_max_limit 128→190
        (0x10F27, b'\xa0', b'\xbe'),                       # component_b_max_limit 160→190
        (0x10F28, b'\x99\x01', b'\xe6\x01'),               # component_d_max_limit 409→486
        # Variant 1 (idx=2): TG7C0, TG7A0, TG7C1, TG7A1 — Ghidra base 0x21130
-       (0x11556, _E4_LUT_OLD, _E4_LUT_NEW),              # torque_lut[256] ×2
+       (0x11556, _E4_LUT_OLD, _E4_LUT_NEW),              # torque_lut[256] extended-slope
        (0x11D64, b'\x00\xa0', b'\x00\xbe'),               # correction_gain_max 0xA000→0xBE00
        (0x11DA8, b'\x80', b'\xbe'),                       # component_x_max_limit 128→190
        (0x11DA9, b'\xa0', b'\xbe'),                       # component_b_max_limit 160→190
        (0x11DAA, b'\x99\x01', b'\xe6\x01'),               # component_d_max_limit 409→486
        # Variant 0 (idx=1/default): fallback — Ghidra base 0x21FB2
-       (0x123D8, _E4_LUT_OLD, _E4_LUT_NEW),              # torque_lut[256] ×2
+       (0x123D8, _E4_LUT_OLD, _E4_LUT_NEW),              # torque_lut[256] extended-slope
        (0x12BE6, b'\x00\xa0', b'\x00\xbe'),               # correction_gain_max 0xA000→0xBE00
        (0x12C2A, b'\x80', b'\xbe'),                       # component_x_max_limit 128→190
        (0x12C2B, b'\xa0', b'\xbe'),                       # component_b_max_limit 160→190
