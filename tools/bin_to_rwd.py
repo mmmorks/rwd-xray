@@ -43,6 +43,43 @@ def checksum_by_negative_sum_little_endian_ints(fw, start, end):
 
 checksum_funcs = [checksum_by_sum, checksum_by_negative_sum, checksum_by_negative_sum_little_endian_ints]
 
+# E4 torque LUT: 256-entry nonlinear curve (512 bytes, LE ushorts, max 5120)
+_E4_LUT_OLD = bytes.fromhex(
+    '00003a007300ad00e70021015a019401ce01080241027b02b502ef0228036203'
+    '9c03d6030f0449048304bd04f60430056a05a405dd05170651068b06c406fe06'
+    '38075d078207a707cc07f10716083b0860088408a908ce08f30818093d096209'
+    '8709ac09d109f6091b0a400a650a8a0aaf0ad30af80a1d0b420b670b8c0bb10b'
+    'd60bfb0b0f0c220c360c4a0c5d0c710c850c980cac0cc00cd40ce70cfb0c0f0d'
+    '220d360d4a0d5d0d710d850d980dac0dc00dd30de70dfb0d0f0e220e360e4a0e'
+    '5d0e710e850e980eac0ec00ed30ee70efb0e0e0f220f360f4a0f5d0f710f850f'
+    '980fac0fc00fd30fe70ffb0f0e102210361049105d10711085109810ac10c010'
+    'd310e710fb100e112211361149115d11711184119811ac11c011d311e711fb11'
+    '0e122212361249125d12711284129812ac12bf12d312e712fb120e1322133613'
+    '49135d1365136d1375137d1385138e1396139e13a613ae13b613be13c613ce13'
+    'd613df13e713ef13f713ff13ff13ff1300140014001400140014001400140014'
+    '0014001400140014001400140014001400140014001400140014001400140014'
+    '0014001400140014001400140014001400140014001400140014001400140014'
+    '0014001400140014001400140014001400140014001400140014001400140014'
+    '0014001400140014001400140014001400140014001400140014001400140014')
+# E4 torque LUT: doubled values (max 10240)
+_E4_LUT_NEW = bytes.fromhex(
+    '00007400e6005a01ce014202b40228039c0310048204f6046a05de055006c406'
+    '3807ac071e08920806097a09ec09600ad40a480bba0b2e0ca20c160d880dfc0d'
+    '700eba0e040f4e0f980fe20f2c107610c010081152119c11e61130127a12c412'
+    '0e135813a213ec1336148014ca1414155e15a615f0153a168416ce1618176217'
+    'ac17f6171e1844186c189418ba18e2180a19301958198019a819ce19f6191e1a'
+    '441a6c1a941aba1ae21a0a1b301b581b801ba61bce1bf61b1e1c441c6c1c941c'
+    'ba1ce21c0a1d301d581d801da61dce1df61d1c1e441e6c1e941eba1ee21e0a1f'
+    '301f581f801fa61fce1ff61f1c2044206c209220ba20e2200a21302158218021'
+    'a621ce21f6211c2244226c229222ba22e2220823302358238023a623ce23f623'
+    '1c2444246c249224ba24e2240825302558257e25a625ce25f6251c2644266c26'
+    '9226ba26ca26da26ea26fa260a271c272c273c274c275c276c277c278c279c27'
+    'ac27be27ce27de27ee27fe27fe27fe2700280028002800280028002800280028'
+    '0028002800280028002800280028002800280028002800280028002800280028'
+    '0028002800280028002800280028002800280028002800280028002800280028'
+    '0028002800280028002800280028002800280028002800280028002800280028'
+    '0028002800280028002800280028002800280028002800280028002800280028')
+
 car_models = {
   '39990-TLA-A030': { #CR-V thanks to joe1
     'can-address': '0x18DA30F1',
@@ -129,6 +166,39 @@ car_models = {
        (0x1c2a8, b'\x0a', b'\x01'), # min_speed_2
        (0x1c520, b'\x0a', b'\x01'), # min_speed_2
        (0x1c798, b'\x0a', b'\x01'), # min_speed_2
+       # E4 torque path: LUT×2 approach (~2x authority, consistent ratio)
+       # All 5 lane_assist_params variants: torque_lut×2, correction_gain, clamps
+       # Offsets are into .bin data (Ghidra address - 0x10000)
+       # Variant 4 (idx=5): TG8A2, TG8X0 — Ghidra base 0x1E5AA
+       (0x0E9D0, _E4_LUT_OLD, _E4_LUT_NEW),              # torque_lut[256] ×2
+       (0x0F1DE, b'\x00\xa0', b'\x00\xbe'),               # correction_gain_max 0xA000→0xBE00
+       (0x0F222, b'\x80', b'\xbe'),                       # component_x_max_limit 128→190
+       (0x0F223, b'\xa0', b'\xbe'),                       # component_b_max_limit 160→190
+       (0x0F224, b'\x99\x01', b'\xe6\x01'),               # component_d_max_limit 409→486
+       # Variant 3 (idx=4): TG8C0, TG8A0, TG8A1, TG8C1 — Ghidra base 0x1F42C
+       (0x0F852, _E4_LUT_OLD, _E4_LUT_NEW),              # torque_lut[256] ×2
+       (0x10060, b'\x00\xa0', b'\x00\xbe'),               # correction_gain_max 0xA000→0xBE00
+       (0x100A4, b'\x80', b'\xbe'),                       # component_x_max_limit 128→190
+       (0x100A5, b'\xa0', b'\xbe'),                       # component_b_max_limit 160→190
+       (0x100A6, b'\x99\x01', b'\xe6\x01'),               # component_d_max_limit 409→486
+       # Variant 2 (idx=3): TG7D0, TG7Y0, TG7C2, TG7A2 — Ghidra base 0x202AE
+       (0x106D4, _E4_LUT_OLD, _E4_LUT_NEW),              # torque_lut[256] ×2
+       (0x10EE2, b'\x00\xa0', b'\x00\xbe'),               # correction_gain_max 0xA000→0xBE00
+       (0x10F26, b'\x80', b'\xbe'),                       # component_x_max_limit 128→190
+       (0x10F27, b'\xa0', b'\xbe'),                       # component_b_max_limit 160→190
+       (0x10F28, b'\x99\x01', b'\xe6\x01'),               # component_d_max_limit 409→486
+       # Variant 1 (idx=2): TG7C0, TG7A0, TG7C1, TG7A1 — Ghidra base 0x21130
+       (0x11556, _E4_LUT_OLD, _E4_LUT_NEW),              # torque_lut[256] ×2
+       (0x11D64, b'\x00\xa0', b'\x00\xbe'),               # correction_gain_max 0xA000→0xBE00
+       (0x11DA8, b'\x80', b'\xbe'),                       # component_x_max_limit 128→190
+       (0x11DA9, b'\xa0', b'\xbe'),                       # component_b_max_limit 160→190
+       (0x11DAA, b'\x99\x01', b'\xe6\x01'),               # component_d_max_limit 409→486
+       # Variant 0 (idx=1/default): fallback — Ghidra base 0x21FB2
+       (0x123D8, _E4_LUT_OLD, _E4_LUT_NEW),              # torque_lut[256] ×2
+       (0x12BE6, b'\x00\xa0', b'\x00\xbe'),               # correction_gain_max 0xA000→0xBE00
+       (0x12C2A, b'\x80', b'\xbe'),                       # component_x_max_limit 128→190
+       (0x12C2B, b'\xa0', b'\xbe'),                       # component_b_max_limit 160→190
+       (0x12C2C, b'\x99\x01', b'\xe6\x01'),               # component_d_max_limit 409→486
      ]
   },
 }
