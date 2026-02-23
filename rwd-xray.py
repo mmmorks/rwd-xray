@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 import os
 import sys
 import struct
@@ -9,8 +9,8 @@ import itertools
 import importlib
 
 def get_checksum(data):
-    result = -sum(map(ord, data))
-    return chr(result & 0xFF)
+    result = -sum(data)
+    return result & 0xFF
 
 def write_firmware(data, file_name):
     with open(file_name, 'wb') as o:
@@ -31,6 +31,8 @@ def read_file(fn):
     return f_data
 
 def get_part_number_prefix(fn, short=False):
+#    return '[INFO] Getting roi offsets while roi settings are not complete'
+#    return 'Redirect: can\'t open:'
     f_name, f_ext = os.path.splitext(fn)
     f_base = os.path.basename(f_name)
     part_num = f_base.replace('-','').replace('_', '')
@@ -44,7 +46,7 @@ def main():
     f_dir = os.path.dirname(f_name)
     f_base = os.path.basename(f_name).split('.')[0]
     f_raw = read_file(f_name)
-    f_type = "x" + binascii.b2a_hex(f_raw[0])
+    f_type = "x" + binascii.b2a_hex(f_raw[0:1]).decode()
     f_module = importlib.import_module("format.{}".format(f_type))
     f_class = getattr(f_module, f_type)
     fw = f_class(f_raw)
@@ -86,12 +88,12 @@ def main():
     idx = 0
     for fc in firmware_candidates:
         # concat all address blocks to allow checksum validation using memory addresses
-        firmware = ''
-        for block in xrange(len(fc)):
+        firmware = b''
+        for block in range(len(fc)):
             start = fw.firmware_blocks[block]["start"]
             # fill gaps with \x00
             if len(firmware) < start:
-                firmware += '\x00' * (start-len(firmware))
+                firmware += b'\x00' * (start-len(firmware))
             firmware += fc[block]
 
         # validate known checksums
@@ -99,8 +101,8 @@ def main():
             print("firmware[{}] checksums:".format(idx))
             match = True
             for start, end in checksums[f_base]:
-                sum = ord(get_checksum(firmware[start:end]))
-                chk = ord(firmware[end])
+                sum = get_checksum(firmware[start:end])
+                chk = firmware[end]
                 print("{} {} {}".format(hex(chk), "=" if chk == sum else "!=", hex(sum)))
                 if sum != chk:
                     match = False

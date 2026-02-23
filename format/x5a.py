@@ -1,7 +1,7 @@
 import struct
-from base import Base
-from header import Header
-from header_value import HeaderValue
+from .base import Base
+from .header import Header
+from .header_value import HeaderValue
 
 class x5a(Base):
     def __init__(self, data):
@@ -23,7 +23,7 @@ class x5a(Base):
             d_idx += 1
 
             # first byte is number of values
-            cnt = ord(h_prefix)
+            cnt = h_prefix
 
             f_header = Header(h_idx, h_prefix, "")
             for v_idx in range(cnt):
@@ -31,7 +31,7 @@ class x5a(Base):
                 d_idx += 1
 
                 # first byte is length of value
-                length = ord(v_prefix)
+                length = v_prefix
                 v_data = data[d_idx:d_idx+length]
                 d_idx += length
 

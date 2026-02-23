@@ -1,8 +1,8 @@
 from binascii import a2b_hex
 
-from base import Base
-from header import Header
-from header_value import HeaderValue
+from .base import Base
+from .header import Header
+from .header_value import HeaderValue
 
 class x31(Base):
     def __init__(self, data):
@@ -24,13 +24,13 @@ class x31(Base):
             d_idx += 3
 
             # delimiter is 0x__0D0A
-            assert h_prefix[1:] == "\x0D\x0A", "header delimiter not found!"
+            assert h_prefix[1:] == b"\x0D\x0A", "header delimiter not found!"
 
             f_header = Header(h_prefix[0], h_prefix, h_prefix)
             # stop when delimiter is repeat ed
             while data[d_idx:d_idx+3] != h_prefix:
                 # values delimited by 0x0D0A
-                end_idx = data.find("\x0D\x0A", d_idx)
+                end_idx = data.find(b"\x0D\x0A", d_idx)
                 assert end_idx != -1, "field delimiter not found!"
 
                 v_data = data[d_idx:end_idx]
@@ -54,7 +54,7 @@ class x31(Base):
 
     def _get_keys(self, headers):
         for header in headers:
-            if header.id == "&":
+            if header.id == ord("&"):
                 assert len(header.values) == 1, "encryption key header does not have exactly one value!"
                 value = a2b_hex(header.values[0].value)
                 assert len(value) == 3, "encryption key header not three bytes!"
@@ -69,16 +69,16 @@ class x31(Base):
         data_size = chunk_size - 2
         addr_next = 0
         block_start = 0
-        block_data = ""
-        for i in xrange(0, len(data), chunk_size):
-            addr = (ord(data[i]) << 12) | (ord(data[i+1]) << 4)
+        block_data = b""
+        for i in range(0, len(data), chunk_size):
+            addr = (data[i] << 12) | (data[i+1] << 4)
             assert addr >= addr_next, "address decreased"
             if addr != addr_next:
                 if len(block_data) > 0:
                     firmware.append(block_data)
                     addr_blocks.append({"start": block_start, "length": len(block_data)})
                 block_start = addr
-                block_data = ""
+                block_data = b""
             
             block_data += data[i+2:i+data_size+2]
             addr_next = addr + data_size
